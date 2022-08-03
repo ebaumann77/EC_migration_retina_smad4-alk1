@@ -392,6 +392,28 @@ def plot_coordinate_system(parameters, key_file, experimentID):
     else:
         print('Experiment ID %s is not listed in the key file.' % experimentID)        
 
+def single_retina_means_box_plot(parameters, dir_append):
+
+        #inputDir = "data/processed/python_results/"
+    inputDir = parameters["out_dir"] + "processed/python_results/" 
+
+    folderList = []
+    for path, subdirs, files in os.walk(inputDir):
+        if 'ExperimentID' in path and dir_append in path:
+            folderList.append(path)
+    folder_list = np.unique(folderList)
+
+    res_list = []
+    for res_folder in folder_list:
+        distances_AV = np.load(res_folder + 'distances_AV.npy')
+        distances_R = np.load(res_folder + 'distances_R.npy')
+
+    # TODO compute means for each retina and generate box plots
+
+    return 0
+
+    
+
 #======================================================================================================================
 #=                                            Plots for accessing velocities                                          =
 #======================================================================================================================
