@@ -7,10 +7,10 @@ pixel_no_per_retina : 20000
 image_types : ['GFP X ERG', 'GFP']
 # decide which experiment shall be loaded for plotting results, only ONE can be TRUE
 load_conditions : ['VEGFR3CreERT2 mTmG']
-radial_bins : [[0,500],[0,1000],[0,1500],[0,2000],[500,1000],[1000,1500],[1500,2000]],
+radial_bins : [[0,500],[0,1000],[0,1500],[0,2000],[500,1000],[1000,1500],[1500,2000]]
 # decide if kde and individual histograms shall be plotted
-plot_kde : False,
-plot_individual_hist : False,
+plot_kde : False
+plot_individual_hist : False
 # time points for plotting histograms and kde plots
 time_points : ['P5_P6', 'P5_P9']
 

@@ -33,7 +33,6 @@ sns.distplot(p_values[tp]['GFP']['distances_AD_0to1200'], bins=100)
 def plot_all_hists(parameters, all_data, df, exp_cond, dir_plots):
     print('Plotting combined histograms...')
     plot_combined_hists(parameters, all_data, dir_plots)
-    #print('Comparing our ("bootstrapping") normalizations for number of GFP positive cells with how Silvanus did it (for ' + dir_append +')...')
     #compare_normalization_sloppily_histograms(parameters, all_data, dir_append, dir_plots)
     
     if parameters['radial_bins'] != []:
