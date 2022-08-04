@@ -2,6 +2,7 @@ import seaborn as sns
 from pylab import plt
 import os
 import scipy
+from scipy import stats
 import shutil
 import numpy as np
 import math
@@ -483,6 +484,25 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
    
     stats_df = pd.DataFrame()
     
+    data_P7 = plot_features[plot_features["time_point"]=="P7"]
+    data_P7_yesfloxflox = data_P7[data_P7["condition"] == conditions[1]]
+    data_P7_ctr= data_P7[data_P7["condition"] == conditions[0]]
+
+    test_P7 = stats.ttest_ind(data_P7_ctr['mean_AV'], data_P7_yesfloxflox['mean_AV'], axis=0, equal_var=False, nan_policy='propagate', permutations=None, random_state=None, alternative='two-sided')
+    
+    print("Welch's test P7")
+    print(test_P7)    
+    
+    data_P15 = plot_features[plot_features["time_point"]=="P15"]
+    data_P15_yesfloxflox = data_P15[data_P15["condition"] == conditions[1]]
+    data_P15_ctr= data_P15[data_P15["condition"] == conditions[0]]
+
+
+    test_P15 = stats.ttest_ind(data_P15_ctr['mean_AV'], data_P15_yesfloxflox['mean_AV'], axis=0, equal_var=False, nan_policy='propagate', permutations=None, random_state=None, alternative='two-sided')
+
+    print("Welch's test P15")
+    print(test_P15)    
+
     # plot of the mean (per retina sample) AV values
 
     fig, ax = plt.subplots(figsize=(width, length))
