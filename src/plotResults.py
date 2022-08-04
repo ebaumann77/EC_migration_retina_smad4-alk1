@@ -401,6 +401,8 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
     inputDir = parameters["out_dir"] + "processed/python_results/" 
     outputDir = parameters["out_dir"] + "processed/plots/" 
 
+    ax_labels = {'AV': '$\phi_{v-a}$', 'R': '$r \; [\mu m]$'}
+    
     #folderList = dict()
     #for path, subdirs, files in os.walk(inputDir):
     #    if 'ExperimentID' in path and dir_append in path:
@@ -415,12 +417,20 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
 
     #res_list = []
 
+    ######
+    ## Compute plot features
+    ###### 
+
+
     plot_features = pd.DataFrame()
     counter = 0
     for index, row in key_file.iterrows():
         #res_folder in folder_list:
         res_folder_base = inputDir + "/ExperimentID_" + str(row['ExperimentID']) + "_"
-        
+ 
+        if not row[dir_append]:
+            continue            
+       
         for time_points in parameters['time_points']:
             res_folder = res_folder_base + time_points + "/" + dir_append  + "/"
             if os.path.exists(res_folder):
@@ -470,8 +480,7 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
     pairs=[((time_intervals[0],conditions[0]),(time_intervals[0],conditions[1])),
             ((time_intervals[1],conditions[0]),(time_intervals[1],conditions[1]))]
  
-
-    annotator = Annotator(ax, pairs, data=plot_features, y="time_point", x="mean_AV", hue="condition", orient = "h") # x=stats_mode,  orient = "h", 
+    annotator = Annotator(ax, pairs, data=plot_features, y="time_point", x="mean_AV", hue="condition", orient = "h")
                                         #order = time_intervals_order, hue = "condition", hue_order = [condition_other,"control"])
     annotator.configure( test="t-test_welch", text_format="star", loc="inside")
     annotator.apply_and_annotate()
@@ -479,23 +488,42 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
     plot_path = plot_dir + "mean_distances_AV.pdf" 
     plt.savefig(plot_path)        
     
-    fig, ax = plt.subplots(figsize=(9, 10))
+    fig, ax = plt.subplots(figsize=(10, 9))
     #sns.boxplot(x="time_point", y="mean_AV", data=data, hue = "condition", palette=color_palette)
-    sns.boxplot(y="time_point", x="median_AV", data=plot_features, hue = "condition", orient = "h")
-    sns.swarmplot(y="time_point", x="median_AV", data=plot_features, hue = "condition", orient = "h", size=15.0, color="k", dodge = True) 
+    g_boxplot =sns.boxplot(y="time_point", x="median_AV", data=plot_features, hue = "condition", orient = "h")
+    g_swarm = sns.swarmplot(y="time_point", x="median_AV", data=plot_features, hue = "condition", orient = "h", size=15.0, color="k", dodge = True) 
     
+    #g_swarm._legend.remove()
+    #g_boxplot.legend(fontsize = 15, \
+    #           bbox_to_anchor= (1.03, 1), \
+    #           title="Delivery Type", \
+    #           title_fontsize = 18, \
+    #           shadow = True, \
+    #           facecolor = 'white');
+    
+  
     conditions = parameters["load_conditions"]
 
     pairs=[((time_intervals[0],conditions[0]),(time_intervals[0],conditions[1])),
             ((time_intervals[1],conditions[0]),(time_intervals[1],conditions[1]))]
  
 
-    annotator = Annotator(ax, pairs, data=plot_features, y="time_point", x="median_AV", hue="condition", orient = "h") # x=stats_mode,  orient = "h", 
-                                        #order = time_intervals_order, hue = "condition", hue_order = [condition_other,"control"])
+    annotator = Annotator(ax, pairs, data=plot_features, y="time_point", x="median_AV", hue="condition", orient = "h") 
     annotator.configure( test="t-test_welch", text_format="star", loc="inside")
     annotator.apply_and_annotate()
 
     #ax.set_xlim(0,1.2)
+    #ax.legend([],[], frameon=False)
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles[:2], labels[:2], loc = 'upper right', fontsize = 15)
+    
+    ax.set_xlabel(ax_labels['AV']) #+ " median per sample")
+    ax.set_ylabel("time")
+    #g_boxplot.legend(fontsize = 15, \
+    #         bbox_to_anchor= (1.0, 1), \
+    #           title=None, \
+    #           facecolor = 'white');
+    plt.tight_layout()   
 
     plot_path = plot_dir + "median_distances_AV.pdf" 
     plt.savefig(plot_path)        
@@ -510,6 +538,9 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
 
  
     print(plot_features)
+    plot_features.to_csv(plot_dir + "plot_features.csv")
+
+
     return 0
     
     
