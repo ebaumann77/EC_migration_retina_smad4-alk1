@@ -32,11 +32,11 @@ for image_type in parameters['image_types']:
     try: 
         print()
         print('++++++++++++++++++++++++ %s ++++++++++++++++++++++++' %image_type)
-        print('Loading results...')
-        print("image type column")
-        print(key_file[image_type])
-        print("key_file extract")
-        print(key_file[key_file[image_type] == 1])
+        #print('Loading results...')
+        #print("image type column")
+        ##print(key_file[image_type])
+        #print("key_file extract")
+        #print(key_file[key_file[image_type] == 1])
         all_data[image_type] = pd.merge(key_file[key_file[image_type] == 1],functions.load_res(parameters, image_type))
     except:
         print('Error: %s is not a valid image type.' %image_type)
@@ -45,6 +45,11 @@ for image_type in parameters['image_types']:
 #======================================================================================================================
 #=                              STEP 3: PLOT RESULTS FOR DIFFERENT EXPERIMENTAL CONDITIONS                            =
 #======================================================================================================================
+
+    print("key file columns")
+    print(key_file.columns)
+
+    plotResults.single_retina_mean_box_plot(parameters, key_file, image_type)
 
     # plot results depending on what experimental condition(s) is/are specified in parameters file ()
     for i in parameters['load_conditions']:

@@ -8,6 +8,9 @@ import math
 from skimage import io
 import scipy.misc
 import matplotlib.colors as colors
+import pandas as pd
+from statannotations.Annotator import Annotator
+
 
 sns.set_context('poster')
 sns.set_style('white')
@@ -392,26 +395,84 @@ def plot_coordinate_system(parameters, key_file, experimentID):
     else:
         print('Experiment ID %s is not listed in the key file.' % experimentID)        
 
-def single_retina_means_box_plot(parameters, dir_append):
+def single_retina_mean_box_plot(parameters, key_file, dir_append):
 
         #inputDir = "data/processed/python_results/"
     inputDir = parameters["out_dir"] + "processed/python_results/" 
+    outputDir = parameters["out_dir"] + "processed/plots/" 
 
-    folderList = []
-    for path, subdirs, files in os.walk(inputDir):
-        if 'ExperimentID' in path and dir_append in path:
-            folderList.append(path)
-    folder_list = np.unique(folderList)
+    #folderList = dict()
+    #for path, subdirs, files in os.walk(inputDir):
+    #    if 'ExperimentID' in path and dir_append in path:
+    #        folderLista.append(path)
+ 
 
-    res_list = []
-    for res_folder in folder_list:
-        distances_AV = np.load(res_folder + 'distances_AV.npy')
-        distances_R = np.load(res_folder + 'distances_R.npy')
+    #folderList = []
+    #for path, subdirs, files in os.walk(inputDir):
+    #    if 'ExperimentID' in path and dir_append in path:
+    #        folderList.append(path)
+    #folder_list = np.unique(folderList)
 
+    #res_list = []
+
+    plot_features = pd.DataFrame()
+    counter = 0
+    for index, row in key_file.iterrows():
+        #res_folder in folder_list:
+        res_folder_base = inputDir + "/ExperimentID_" + str(row['ExperimentID']) + "_"
+        
+        for time_points in parameters['time_points']:
+            res_folder = res_folder_base + time_points + "/" + dir_append  + "/"
+            if os.path.exists(res_folder):
+                print("Folder exists:")
+                print(res_folder)
+                distances_AV = np.load(res_folder + '/distances_AV.npy')
+                distances_R = np.load(res_folder + '/distances_R.npy')
+
+                print("Shape of distances_AV")
+                print(distances_AV.shape)
+    
+                print("Shape of distances_R")
+                print(distances_R.shape)
+                print("Mean of distances_R")
+                print(np.mean(distances_R))
+
+                plot_features.at[counter, "ExperimentID"] = row['ExperimentID']
+                plot_features.at[counter, "time_point"] = time_points
+                
+                for condition in parameters["load_conditions"]:
+                    if row[condition]:
+                        plot_features.at[counter, "condition"] = condition
+                
+                plot_features.at[counter, "mean_AV"] = np.mean(distances_AV)
+                plot_features.at[counter, "mean_R"] = np.mean(distances_R)
+                counter += 1
+            else:
+                print("Folder does not exist:")
+                print(res_folder)
     # TODO compute means for each retina and generate box plots
+ 
+    plot_dir = outputDir + "/box_plots/"
+        
 
+    fig, ax = plt.subplots(figsize=(9, 10))
+    #sns.boxplot(x="time_point", y="mean_AV", data=data, hue = "condition", palette=color_palette)
+    sns.boxplot(x="time_point", y="mean_AV", data=plot_features, hue = "condition")
+    sns.swarmplot(x="time_point", y="mean_AV", data=plot_features, hue = "condition", size=15.0, color="k", dodge = True) 
+    plot_path = plot_dir + "distances_AV.pdf" 
+    plt.savefig(plot_path)        
+    
+    fig, ax = plt.subplots(figsize=(9, 10))
+    #sns.boxplot(x="time_point", y="mean_AV", data=data, hue = "condition", palette=color_palette)
+    sns.boxplot(x="time_point", y="mean_R", data=plot_features, hue = "condition")
+    sns.swarmplot(x="time_point", y="mean_R", data=plot_features, hue = "condition", size=15.0, color="k", dodge = True) 
+    plot_path = plot_dir + "distances_R.pdf" 
+    plt.savefig(plot_path)        
+
+ 
+    print(plot_features)
     return 0
-
+    
     
 
 #======================================================================================================================
