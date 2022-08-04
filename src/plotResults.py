@@ -446,6 +446,11 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
                 
                 plot_features.at[counter, "mean_AV"] = np.mean(distances_AV)
                 plot_features.at[counter, "mean_R"] = np.mean(distances_R)
+                
+                plot_features.at[counter, "median_AV"] = np.median(distances_AV)
+                plot_features.at[counter, "median_R"] = np.median(distances_R)
+ 
+
                 counter += 1
             else:
                 print("Folder does not exist:")
@@ -453,15 +458,49 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
     # TODO compute means for each retina and generate box plots
  
     plot_dir = outputDir + "/box_plots/"
-        
+    time_intervals = parameters['time_points']
 
     fig, ax = plt.subplots(figsize=(9, 10))
     #sns.boxplot(x="time_point", y="mean_AV", data=data, hue = "condition", palette=color_palette)
-    sns.boxplot(x="time_point", y="mean_AV", data=plot_features, hue = "condition")
-    sns.swarmplot(x="time_point", y="mean_AV", data=plot_features, hue = "condition", size=15.0, color="k", dodge = True) 
-    plot_path = plot_dir + "distances_AV.pdf" 
+    sns.boxplot(y="time_point", x="mean_AV", data=plot_features, hue = "condition", orient = "h")
+    sns.swarmplot(y="time_point", x="mean_AV", data=plot_features, hue = "condition", orient = "h", size=15.0, color="k", dodge = True) 
+    
+    conditions = parameters["load_conditions"]
+
+    pairs=[((time_intervals[0],conditions[0]),(time_intervals[0],conditions[1])),
+            ((time_intervals[1],conditions[0]),(time_intervals[1],conditions[1]))]
+ 
+
+    annotator = Annotator(ax, pairs, data=plot_features, y="time_point", x="mean_AV", hue="condition", orient = "h") # x=stats_mode,  orient = "h", 
+                                        #order = time_intervals_order, hue = "condition", hue_order = [condition_other,"control"])
+    annotator.configure( test="t-test_welch", text_format="star", loc="inside")
+    annotator.apply_and_annotate()
+
+    plot_path = plot_dir + "mean_distances_AV.pdf" 
     plt.savefig(plot_path)        
     
+    fig, ax = plt.subplots(figsize=(9, 10))
+    #sns.boxplot(x="time_point", y="mean_AV", data=data, hue = "condition", palette=color_palette)
+    sns.boxplot(y="time_point", x="median_AV", data=plot_features, hue = "condition", orient = "h")
+    sns.swarmplot(y="time_point", x="median_AV", data=plot_features, hue = "condition", orient = "h", size=15.0, color="k", dodge = True) 
+    
+    conditions = parameters["load_conditions"]
+
+    pairs=[((time_intervals[0],conditions[0]),(time_intervals[0],conditions[1])),
+            ((time_intervals[1],conditions[0]),(time_intervals[1],conditions[1]))]
+ 
+
+    annotator = Annotator(ax, pairs, data=plot_features, y="time_point", x="median_AV", hue="condition", orient = "h") # x=stats_mode,  orient = "h", 
+                                        #order = time_intervals_order, hue = "condition", hue_order = [condition_other,"control"])
+    annotator.configure( test="t-test_welch", text_format="star", loc="inside")
+    annotator.apply_and_annotate()
+
+    #ax.set_xlim(0,1.2)
+
+    plot_path = plot_dir + "median_distances_AV.pdf" 
+    plt.savefig(plot_path)        
+    
+
     fig, ax = plt.subplots(figsize=(9, 10))
     #sns.boxplot(x="time_point", y="mean_AV", data=data, hue = "condition", palette=color_palette)
     sns.boxplot(x="time_point", y="mean_R", data=plot_features, hue = "condition")
