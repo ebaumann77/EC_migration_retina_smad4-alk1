@@ -586,7 +586,7 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
 
  
     print(plot_features)
-    plot_features.to_csv(plot_dir + "plot_features.csv")
+    plot_features.to_csv(plot_dir + "plot_features.csv", index = False)
 
 
     return 0
