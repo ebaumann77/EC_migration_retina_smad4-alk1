@@ -1,6 +1,5 @@
 """
-Class Script with functions for the loading, analysing and saving data (might be split into separate files later)
-import with:
+functions for the loading, analysing and saving data (might be split into separate files later)
 import functions
 """
 
@@ -64,7 +63,7 @@ def get_key_file(parameters):
         path  = path.replace("\#", "#")
         key_file.at[i,"filename"] = path
         
-    key_file.to_csv("data/processed_key_file.csv")
+    # key_file.to_csv("data/processed_key_file.csv")
             
     return key_file
 
@@ -278,7 +277,8 @@ def save_all_positions(parameters, key_file, experimentID, drawn_filename, micro
         # define distance map of distances to veins, arteries and optical nerve, and account for pixel size
         # if um/pixel ratio cannot be extracted from any TIFF, take it from the key file instead
         if not ("PhysicalSizeX" in attributes):
-            attributes["PhysicalSizeX"] = key_file[key_file["ExperimentID"] == experimentID].iloc[0][28]
+            key_single_exp = key_file[key_file["ExperimentID"] == experimentID]
+            attributes["PhysicalSizeX"] = key_single_exp["Pixel size in um"].iloc[0]
             print("Warning: scaling pixels to microns could not be extracted from TIFF and was taken from key file!!!")
         print("Attributes")
         print(attributes)

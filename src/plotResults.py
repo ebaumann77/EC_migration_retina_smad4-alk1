@@ -475,6 +475,9 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
  
     
     plot_dir = outputDir + "/box_plots/"
+    if not os.path.exists(plot_dir):
+        os.makedirs(plot_dir)
+
     time_points = ['P7','P15']
     time_intervals = parameters['time_points']
     conditions = parameters["load_conditions"]

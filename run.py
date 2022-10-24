@@ -10,6 +10,8 @@ import plotResults
 parameters = functions.get_parameters()
 key_file = functions.get_key_file(parameters)
 
+key_file.to_csv(parameters["out_dir"] + "key_file.csv")
+
 #======================================================================================================================
 #=                                            STEP 1: COMPUTE ALL RESULTS                                             =
 #======================================================================================================================
