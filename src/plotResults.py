@@ -182,8 +182,8 @@ def kde_plots(parameters, all_data, dir_plots):
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
-    types = ['AV', 'AD', 'VD', 'R']
-    xlabels = ['$\phi_{v-a}$', '$distance \; to \; artery \; [\mu m]$' , '$distance \; to \; vein \; [\mu m]$', '$r \; [\mu m]']
+    types = ['AV', 'AD', 'VD']
+    xlabels = ['$\phi_{v-a}$', '$distance \; to \; artery \; [\mu m]$' , '$distance \; to \; vein \; [\mu m]$']
 
     for tp in time_points:
         if tp in all_data.keys():
@@ -532,12 +532,15 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
 
     fig, ax = plt.subplots(figsize=(width, length))
     
-    sns.boxplot(y="time_point", x="mean_AV", data=plot_features, orient = "h")
+    #sns.boxplot(y="time_point", x="mean_AV", data=plot_features, hue='condition', orient = "h")
+    #sns.swarmplot(y="time_point", x="mean_AV", data=plot_features, hue='condition', orient = "h", size=15.0, color="k", dodge = True)
+    sns.boxplot(y="time_point", x="mean_AV", data=plot_features, orient="h")
     sns.swarmplot(y="time_point", x="mean_AV", data=plot_features, orient = "h", size=15.0, color="k", dodge = True)
-    
+
     # stats
     #pairs=[((time_points[0],conditions[0]),(time_points[0],conditions[1])),
          #   ((time_points[1],conditions[0]),(time_points[1],conditions[1]))]
+    # TODO Read time points to plot from parameters file instead of hardcoding here
     pairs = [('P7', 'P15')]
 
     annotator = Annotator(ax, pairs, data=plot_features, y="time_point", x="mean_AV", orient = "h")
@@ -562,6 +565,7 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
     
     fig, ax = plt.subplots(figsize=(10, 9))
     #sns.boxplot(x="time_point", y="mean_AV", data=data, hue = "condition", palette=color_palette)
+    # sns.boxplot(y="time_point", x="median_AV", data=plot_features, hue='condition', orient = "h")
     g_boxplot =sns.boxplot(y="time_point", x="median_AV", data=plot_features, orient = "h")
     g_swarm = sns.swarmplot(y="time_point", x="median_AV", data=plot_features, orient = "h", size=15.0, color="k", dodge = True)
     
@@ -569,7 +573,8 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
      #       ((time_points[1],conditions[0]),(time_points[1],conditions[1]))]
     pairs = [('P7', 'P15')]
 
-    annotator = Annotator(ax, pairs, data=plot_features, y="time_point", x="median_AV", orient = "h")
+    #annotator = Annotator(ax, pairs, data=plot_features, y="time_point", x="median_AV", hue='condition', orient = "h")
+    annotator = Annotator(ax, pairs, data=plot_features, y="time_point", x="median_AV", orient="h")
     annotator.configure( test="t-test_welch", text_format="star", loc="inside")
     annotator.apply_and_annotate()
 

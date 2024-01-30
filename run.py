@@ -67,7 +67,7 @@ for image_type in parameters['image_types']:
         dir_plots = parameters['out_dir'] + 'processed/plots/pixels_per_retina_' + str(parameters['pixel_no_per_retina']) + '/' + image_type + '/' + folder + '/'
         print()
         # Plot histograms and kde plots
-        #plotResults.plot_all_hists(parameters, rearranged_data[image_type][i], all_data[image_type], i, dir_plots)
+        plotResults.plot_all_hists(parameters, rearranged_data[image_type][i], all_data[image_type], i, dir_plots)
 
     # plot
     dir_plots = parameters['out_dir'] + 'processed/plots/pixels_per_retina_' + str(parameters['pixel_no_per_retina']) + '/' + image_type + '/'
