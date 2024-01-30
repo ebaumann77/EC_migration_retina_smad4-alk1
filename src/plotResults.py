@@ -189,7 +189,7 @@ def kde_plots(parameters, all_data, dir_plots):
         if tp in all_data.keys():
             for art in range(len(types)):
                 plt.figure()
-                g = sns.jointplot(all_data[tp]['distances_' + types[art]], all_data[tp]['distances_R'], kind='kde', space=0, color=all_data[tp]['color'], ylim=[0,2200]).set_axis_labels(xlabels[art], '$r \; [\mu m]$')
+                g = sns.jointplot(all_data[tp]['distances_' + types[art]], all_data[tp]['distances_R'], kind='kde', space=0, color=all_data[tp]['color'], ylim=[0,2200], fill='True').set_axis_labels(xlabels[art], '$r \; [\mu m]$')
                 for i in range(len(time_points)):
                     g.ax_joint.axvline(all_data[time_points[i]]['median_' + types[art]],ls='--', lw= 1.5, color=all_data[time_points[i]]['color'])
                     g.ax_joint.axhline(all_data[time_points[i]]['median_R'],ls='--', lw= 1.5, color=all_data[time_points[i]]['color'])
@@ -221,7 +221,7 @@ def cond_kde_plots(parameters, all_data, dir_plots):
         for typ in range(len(types)):
             for cond in range(len(conds)):
                 plt.figure()      
-                sns.jointplot(all_data[conds[cond]][tp]['distances_' + types[typ]], all_data[conds[cond]][tp]['distances_' + radii[typ]], kind='kde', space=0, color=colors[cond], ylim=ylims[typ]).set_axis_labels(xlabels[typ], '$r \; [\mu m]$')
+                sns.jointplot(all_data[conds[cond]][tp]['distances_' + types[typ]], all_data[conds[cond]][tp]['distances_' + radii[typ]], kind='kde', space=0, color=colors[cond], ylim=ylims[typ], fill='True').set_axis_labels(xlabels[typ], '$r \; [\mu m]$')
                 #plt.title(conds[cond] + types[typ])
                 plt.savefig(dir_name + types[typ] + '_' + conds[cond] + '_kdePlot_' + str(tp) + '.png', format="png", bbox_inches = "tight", dpi=150)
                 plt.savefig(dir_name + types[typ] + '_' + conds[cond] + '_kdePlot_' + str(tp) + '.pdf', format="pdf", bbox_inches = "tight", dpi=150)
@@ -436,25 +436,31 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
         for time_points in parameters['time_points']:
             res_folder = res_folder_base + time_points + "/" + dir_append  + "/"
             if os.path.exists(res_folder):
-                print("Folder exists:")
-                print(res_folder)
+                # print("Folder exists:")
+                # print(res_folder)
                 distances_AV = np.load(res_folder + '/distances_AV.npy')
+                # print('This is what the AV numpy array looks like:')
+                # print(distances_AV)
+                # print(np.isnan(distances_AV).any())
+                # print('This is what the R numpy array looks like:')
                 distances_R = np.load(res_folder + '/distances_R.npy')
-
-                print("Shape of distances_AV")
-                print(distances_AV.shape)
-    
-                print("Shape of distances_R")
-                print(distances_R.shape)
-                print("Mean of distances_R")
-                print(np.mean(distances_R))
+                # print(distances_R)
+                # print(np.isnan(distances_R).any())
+                #
+                # print("Shape of distances_AV")
+                # print(distances_AV.shape)
+                #
+                # print("Shape of distances_R")
+                # print(distances_R.shape)
+                # print("Mean of distances_R")
+                # print(np.mean(distances_R))
 
                 plot_features.at[counter, "ExperimentID"] = row['ExperimentID']
                 plot_features.at[counter, "time_interval"] = time_points
-               
-                if row['P15']:
+
+                if row['Collection Point'] == 15:
                     plot_features.at[counter, "time_point"] = "P15"
-                if row['P7']:
+                if row['Collection Point'] == 7:
                     plot_features.at[counter, "time_point"] = "P7"
                 
                 for condition in parameters["load_conditions"]:
@@ -473,12 +479,14 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
                 print("Folder does not exist:")
                 print(res_folder)
  
-    
+    print(str(plot_features["mean_AV"]))
+    print(plot_features.keys())
+
     plot_dir = outputDir + "/box_plots/"
     if not os.path.exists(plot_dir):
         os.makedirs(plot_dir)
 
-    time_points = ['P7','P15']
+    time_points = ['P7', 'P15']
     time_intervals = parameters['time_points']
     conditions = parameters["load_conditions"]
  
@@ -488,36 +496,51 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
     stats_df = pd.DataFrame()
     
     data_P7 = plot_features[plot_features["time_point"]=="P7"]
-    data_P7_yesfloxflox = data_P7[data_P7["condition"] == conditions[1]]
-    data_P7_ctr= data_P7[data_P7["condition"] == conditions[0]]
-
-    test_P7 = stats.ttest_ind(data_P7_ctr['mean_AV'], data_P7_yesfloxflox['mean_AV'], axis=0, equal_var=False, nan_policy='propagate', permutations=None, random_state=None, alternative='two-sided')
-    
-    print("Welch's test P7")
-    print(test_P7)    
-    
     data_P15 = plot_features[plot_features["time_point"]=="P15"]
-    data_P15_yesfloxflox = data_P15[data_P15["condition"] == conditions[1]]
-    data_P15_ctr= data_P15[data_P15["condition"] == conditions[0]]
+    print(data_P15['ExperimentID'])
+    test_smad4 = stats.ttest_ind(data_P7['mean_AV'], data_P15['mean_AV'], axis=0, equal_var=False,
+                                nan_policy='propagate', permutations=None, random_state=None, alternative='two-sided')
+    print("Welch's test Smad4")
+    print(test_smad4)
+
+    try:
+        data_P7_yesfloxflox = data_P7[data_P7["condition"] == conditions[1]]
+        data_P7_ctr= data_P7[data_P7["condition"] == conditions[0]]
+
+        test_P7 = stats.ttest_ind(data_P7_ctr['mean_AV'], data_P7_yesfloxflox['mean_AV'], axis=0, equal_var=False, nan_policy='propagate', permutations=None, random_state=None, alternative='two-sided')
+    
+        print("Welch's test P7")
+        print(test_P7)
+    except:
+        print("Welch's t_test to compare conditions was not performed for P7 as there was something wrong (E.g. not enough conditions to compare).")
+
+    data_P15 = plot_features[plot_features["time_point"]=="P15"]
+
+    try:
+        data_P15_yesfloxflox = data_P15[data_P15["condition"] == conditions[1]]
+        data_P15_ctr= data_P15[data_P15["condition"] == conditions[0]]
 
 
-    test_P15 = stats.ttest_ind(data_P15_ctr['mean_AV'], data_P15_yesfloxflox['mean_AV'], axis=0, equal_var=False, nan_policy='propagate', permutations=None, random_state=None, alternative='two-sided')
+        test_P15 = stats.ttest_ind(data_P15_ctr['mean_AV'], data_P15_yesfloxflox['mean_AV'], axis=0, equal_var=False, nan_policy='propagate', permutations=None, random_state=None, alternative='two-sided')
 
-    print("Welch's test P15")
-    print(test_P15)    
+        print("Welch's test P15")
+        print(test_P15)
+    except:
+        print("Welch's t_test was not performed for P15 as there was something wrong (E.g. not enough conditions to compare).")
 
     # plot of the mean (per retina sample) AV values
 
     fig, ax = plt.subplots(figsize=(width, length))
     
-    sns.boxplot(y="time_point", x="mean_AV", data=plot_features, hue = "condition", orient = "h")
-    sns.swarmplot(y="time_point", x="mean_AV", data=plot_features, hue = "condition", orient = "h", size=15.0, color="k", dodge = True) 
+    sns.boxplot(y="time_point", x="mean_AV", data=plot_features, orient = "h")
+    sns.swarmplot(y="time_point", x="mean_AV", data=plot_features, orient = "h", size=15.0, color="k", dodge = True)
     
     # stats
-    pairs=[((time_points[0],conditions[0]),(time_points[0],conditions[1])),
-            ((time_points[1],conditions[0]),(time_points[1],conditions[1]))]
- 
-    annotator = Annotator(ax, pairs, data=plot_features, y="time_point", x="mean_AV", hue="condition", orient = "h")
+    #pairs=[((time_points[0],conditions[0]),(time_points[0],conditions[1])),
+         #   ((time_points[1],conditions[0]),(time_points[1],conditions[1]))]
+    pairs = [('P7', 'P15')]
+
+    annotator = Annotator(ax, pairs, data=plot_features, y="time_point", x="mean_AV", orient = "h")
                                         #order = time_intervals_order, hue = "condition", hue_order = [condition_other,"control"])
     annotator.configure( test="t-test_welch", text_format="star", loc="inside")
     annotator.apply_and_annotate()
@@ -530,21 +553,23 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
     plt.tight_layout()   
 
 
-    plot_path = plot_dir + "mean_distances_AV.pdf" 
-    plt.savefig(plot_path)        
-    
-    # plot of the mean (per retina sample) AV values
+    plot_path = plot_dir + "mean_distances_AV.pdf"
+    plot_path_png = plot_dir + "mean_distances_AV.png"
+    plt.savefig(plot_path)
+    plt.savefig(plot_path_png)
+
+        # plot of the mean (per retina sample) AV values
     
     fig, ax = plt.subplots(figsize=(10, 9))
     #sns.boxplot(x="time_point", y="mean_AV", data=data, hue = "condition", palette=color_palette)
-    g_boxplot =sns.boxplot(y="time_point", x="median_AV", data=plot_features, hue = "condition", orient = "h")
-    g_swarm = sns.swarmplot(y="time_point", x="median_AV", data=plot_features, hue = "condition", orient = "h", size=15.0, color="k", dodge = True) 
+    g_boxplot =sns.boxplot(y="time_point", x="median_AV", data=plot_features, orient = "h")
+    g_swarm = sns.swarmplot(y="time_point", x="median_AV", data=plot_features, orient = "h", size=15.0, color="k", dodge = True)
     
-    pairs=[((time_points[0],conditions[0]),(time_points[0],conditions[1])),
-            ((time_points[1],conditions[0]),(time_points[1],conditions[1]))]
- 
+    #pairs=[((time_points[0],conditions[0]),(time_points[0],conditions[1])),
+     #       ((time_points[1],conditions[0]),(time_points[1],conditions[1]))]
+    pairs = [('P7', 'P15')]
 
-    annotator = Annotator(ax, pairs, data=plot_features, y="time_point", x="median_AV", hue="condition", orient = "h") 
+    annotator = Annotator(ax, pairs, data=plot_features, y="time_point", x="median_AV", orient = "h")
     annotator.configure( test="t-test_welch", text_format="star", loc="inside")
     annotator.apply_and_annotate()
 
@@ -555,22 +580,25 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
     ax.set_ylabel("time")
     plt.tight_layout()   
 
-    plot_path = plot_dir + "median_distances_AV.pdf" 
-    plt.savefig(plot_path)        
-    
+    plot_path = plot_dir + "median_distances_AV.pdf"
+    plot_path_png = plot_dir + "median_distances_AV.png"
+    plt.savefig(plot_path)
+    plt.savefig(plot_path_png)
 
     # plot of the mean (per retina sample) R values
     
     fig, ax = plt.subplots(figsize=(9, 10))
     #sns.boxplot(x="time_point", y="mean_AV", data=data, hue = "condition", palette=color_palette)
-    sns.boxplot(x="time_point", y="mean_R", data=plot_features, hue = "condition")
-    sns.swarmplot(x="time_point", y="mean_R", data=plot_features, hue = "condition", size=15.0, color="k", dodge = True) 
+    #sns.boxplot(x="time_point", y="mean_R", data=plot_features, hue = "condition")
+    sns.boxplot(x="time_point", y="mean_R", data=plot_features)
+    #sns.swarmplot(x="time_point", y="mean_R", data=plot_features, hue = "condition", size=15.0, color="k", dodge = True)
+    sns.swarmplot(x="time_point", y="mean_R", data=plot_features, size=15.0, color="k", dodge=True)
 
-    pairs=[((time_points[0],conditions[0]),(time_points[0],conditions[1])),
-            ((time_points[1],conditions[0]),(time_points[1],conditions[1]))]
- 
+    #pairs=[((time_points[0],conditions[0]),(time_points[0],conditions[1])),
+     #       ((time_points[1],conditions[0]),(time_points[1],conditions[1]))]
+    pairs = [('P7', 'P15')]
 
-    annotator = Annotator(ax, pairs, data=plot_features, x="time_point", y="mean_R", hue="condition") 
+    annotator = Annotator(ax, pairs, data=plot_features, x="time_point", y="mean_R")#, hue="condition")
     annotator.configure( test="t-test_welch", text_format="star", loc="inside")
     annotator.apply_and_annotate()
 
@@ -582,12 +610,12 @@ def single_retina_mean_box_plot(parameters, key_file, dir_append):
     plt.tight_layout()   
 
 
+    plot_path = plot_dir + "distances_R.pdf"
+    plot_path_png = plot_dir + "distances_R.png"
+    plt.savefig(plot_path)
+    plt.savefig(plot_path_png)
 
 
-    plot_path = plot_dir + "distances_R.pdf" 
-    plt.savefig(plot_path)        
-
- 
     print(plot_features)
     plot_features.to_csv(plot_dir + "plot_features.csv", index = False)
 

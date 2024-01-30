@@ -27,6 +27,7 @@ import multiprocessing
 import shutil
 import yaml
 import random
+import matplotlib.colors as colors
 
 sns.set_context('poster')
 sns.set_style('white')
@@ -217,7 +218,9 @@ def save_all_positions(parameters, key_file, experimentID, drawn_filename, micro
     folder_name = parameters["out_dir"] + 'processed/python_results/'
     print(microscopy_filename)
     # get time point to include in output folder later. This helps when reading in the results in load_res
-    tp = TP_from_filename(drawn_filename)
+    #tp = TP_from_filename(drawn_filename)
+    experiment_df = key_file[key_file["ExperimentID"] == experimentID]
+    tp = 'P' + str(experiment_df["THO Injection Point"].iloc[0]) + '_P' + str(experiment_df["Collection Point"].iloc[0])
     
     dir_name = folder_name + 'ExperimentID_' + str(experimentID) + '_' + str(tp) + '/' + dir_append
 
@@ -276,10 +279,10 @@ def save_all_positions(parameters, key_file, experimentID, drawn_filename, micro
     
         # define distance map of distances to veins, arteries and optical nerve, and account for pixel size
         # if um/pixel ratio cannot be extracted from any TIFF, take it from the key file instead
-        if not ("PhysicalSizeX" in attributes):
-            key_single_exp = key_file[key_file["ExperimentID"] == experimentID]
-            attributes["PhysicalSizeX"] = key_single_exp["Pixel size in um"].iloc[0]
-            print("Warning: scaling pixels to microns could not be extracted from TIFF and was taken from key file!!!")
+        #if not ("PhysicalSizeX" in attributes):
+        key_single_exp = key_file[key_file["ExperimentID"] == experimentID]
+        attributes["PhysicalSizeX"] = key_single_exp["Pixel size in um"].iloc[0]
+            #print("Warning: scaling pixels to microns could not be extracted from TIFF and was taken from key file!!!")
         print("Attributes")
         print(attributes)
     
@@ -382,6 +385,85 @@ def save_all_positions(parameters, key_file, experimentID, drawn_filename, micro
                       'mean_R': mean_R}
     
         print("Job done: " + dir_name)
+
+
+        print("Plotting masks and distance maps to check...")
+        folder = parameters['out_dir'] + "distance_maps/"
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        # plot distance transforms for checking
+        outline_mask = scipy.ndimage.morphology.binary_fill_holes(img_map[:, :, pos_mask])
+        fig, axes = plt.subplots(1, 4, figsize=(20, 5), sharex=True, sharey=True)
+        cmap1 = colors.ListedColormap(['none', 'white'])
+        axes[0].imshow(np.ma.masked_where(outline_mask == 0, optical_distance), cmap=plt.get_cmap("Greys"))
+        # axes[0].imshow(optical_distance, cmap=plt.get_cmap("Greys"))
+        axes[0].axis('off')
+        CS = axes[0].contour(optical_distance, [1000, 1500, 2000], linewidths=2)
+        axes[0].clabel(CS, [1000, 1500, 2000], inline=1, fmt='%1.1f', fontsize=12)
+        axes[0].imshow(img_map[:, :, 0], cmap=cmap1)
+
+        axes[1].imshow(np.ma.masked_where(outline_mask == 0, artery_distance), cmap=plt.get_cmap("Reds_r"))
+        # axes[1].imshow(artery_distance, cmap=plt.get_cmap("Reds_r"))
+        axes[1].axis('off')
+        CS = axes[1].contour(optical_distance, [1000, 1500, 2000], linewidths=2)
+        axes[1].clabel(CS, [1000, 1500, 2000], inline=1, fmt='%1.1f', fontsize=12)
+        axes[1].imshow(img_map[:, :, 1], cmap=cmap1)
+
+        axes[2].imshow(np.ma.masked_where(outline_mask == 0, vein_distance), cmap=plt.get_cmap("Blues_r"))
+        # axes[2].imshow(vein_distance, cmap=plt.get_cmap("Blues_r"))
+        axes[2].axis('off')
+        CS = axes[2].contour(optical_distance, [1000, 1500, 2000], linewidths=2)
+        axes[2].clabel(CS, [1000, 1500, 2000], inline=1, fmt='%1.1f', fontsize=12)
+        axes[2].imshow(img_map[:, :, 2], cmap=cmap1)
+
+        palette = plt.cm.coolwarm
+        palette.set_bad('w', 1.0)
+        axes[3].imshow(np.ma.masked_where(outline_mask == 0, av_distance), interpolation='bilinear', cmap=palette,
+                       norm=colors.Normalize(vmin=0.0, vmax=1.0))
+        # axes[3].imshow(av_distance, interpolation='bilinear', cmap=palette,
+        #              norm=colors.Normalize(vmin=0.0, vmax=1.0))
+        axes[3].axis('off')
+        CS = axes[3].contour(optical_distance, [1000, 1500, 2000], linewidths=2)
+        axes[3].clabel(CS, [1000, 1500, 2000], inline=1, fmt='%1.1f', fontsize=12)
+        axes[3].imshow(img_map[:, :, 1], cmap=cmap1)
+
+        plt.savefig(folder + 'distance_maps_ExpID-' + str(experimentID) + '.png', format="png", bbox_inches="tight",
+                    dpi=150)
+        plt.clf()
+        plt.close('all')
+        del fig, axes
+
+        # plot masks for checking
+        # find center of mass of optic nerve
+        center_on = scipy.ndimage.measurements.center_of_mass(
+            scipy.ndimage.morphology.binary_fill_holes(img_map[:, :, pos_on]))
+        folder =  parameters['out_dir'] + "check_masks_dir/"
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        fig, axes = plt.subplots(1, img_map.shape[2], figsize=(10, 8.2), sharex=True, sharey=True)
+
+        for i in range(img_map.shape[2]):
+            circle = plt.Circle((center_on[0], center_on[1]), 1500 / scale_factor, fill=False, linestyle='--')
+            axes[i].imshow(img_map[:, :, i])
+            axes[i].scatter(center_on[0], center_on[1], s=30, marker='+')
+            axes[i].add_patch(circle)
+            axes[i].axis('off')
+        plt.savefig(folder + 'mask_ExpID-' + str(experimentID) + '.png', format="png", bbox_inches="tight", dpi=150)
+        plt.clf()
+        plt.close('all')
+
+        # plot GFP image
+        folder =  parameters['out_dir'] + "check_GFP_image_dir/"
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.imshow(bin_img)
+        plt.savefig(folder + 'microscopy-image_ExpID-' + str(experimentID) + '.png', format="png",
+                    bbox_inches="tight", dpi=150)
+        plt.clf()
+        plt.close('all')
+
         return ret_struct
 
 
@@ -408,17 +490,17 @@ def compute_res(parameters, key_file):
         gfp_filename = parameters["data_dir"] + row_gfp['filename']
 
         # there are not always GFPxERG and ERG files, so we need to check and set the file names to False if there are none
-        if 1 in experiment_df["GFP X ERG"].values:
-            row_gfpXerg = experiment_df[experiment_df["GFP X ERG"] == 1].iloc[0]
-            gfpXerg_filename = parameters["data_dir"] + row_gfpXerg['filename']
-        else:
-            gfpXerg_filename = False
+        #if 1 in experiment_df["GFP X ERG"].values:
+         #   row_gfpXerg = experiment_df[experiment_df["GFP X ERG"] == 1].iloc[0]
+          #  gfpXerg_filename = parameters["data_dir"] + row_gfpXerg['filename']
+        #else:
+        gfpXerg_filename = False
 
-        if 1 in experiment_df["ERG"].values:
-            row_erg = experiment_df[experiment_df["ERG"] == 1].iloc[0]
-            erg_filename = parameters["data_dir"] + row_erg['filename']
-        else:
-            erg_filename = False
+        #if 1 in experiment_df["ERG"].values:
+         #   row_erg = experiment_df[experiment_df["ERG"] == 1].iloc[0]
+          #  erg_filename = parameters["data_dir"] + row_erg['filename']
+        #else:
+        erg_filename = False
 
         attributes = {}
         if gfp_filename != False:
